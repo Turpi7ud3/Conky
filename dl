@@ -1,0 +1,36 @@
+#! /bin/bash
+
+# Get listing of all torrent info from transmission
+# NOTE: you need to install transmission-cli AND UNINSTALL transmission-daemon
+alltorrents=$(transmission-remote http://192.168.1.216:9091/transmission --auth user:password -l | sed -n -e '$b' -e '2,$p')
+
+n=$(echo "$alltorrents" | wc -l)
+
+#progress bar length from right edge of conky
+barlength=80
+
+# Loop through the torrents and extract the relevant information
+for ((i=1; i<=n; i++))
+do
+    # Parse the torrent data
+    torrent_data=$(echo "$alltorrents" | sed -n ''$i'p' | sed 's/   */\//g')
+
+    # Extract the desired information
+    torrent_number=$i
+    torrent_name=$(echo ${torrent_data} | awk -F/ '{print $10}')
+    torrent_status=$(echo ${torrent_data} | awk -F/ '{print $9}')
+    torrent_percentage=$(echo ${torrent_data} | awk -F/ '{print $3}' | sed 's/%//')
+    torrent_eta=$(echo ${torrent_data} | awk -F/ '{print $5}')
+
+    #New Code
+    progress=$(echo ${torrent[$i]} | awk -F/ '{print $3}' | sed 's/%//')
+    download_speed=$(echo ${torrent_data} | awk -F/ '{print $6}')
+    upload_speed=$(echo ${torrent_data} | awk -F/ '{print $7}')
+
+
+    # Output the information for each torrent
+    echo "$torrent_number. $torrent_name"
+    echo "$torrent_status | ${download_speed} KB/s| $torrent_percentage% | $torrent_eta |"
+    echo
+
+done
